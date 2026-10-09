@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Leaflet renders its controls above panels; keep them clickable. */
+.leaflet-container {
+  z-index: 0;
+  background: #e2e8f0;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
