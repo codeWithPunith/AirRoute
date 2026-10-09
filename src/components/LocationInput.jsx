@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { searchPlaces } from '@/services/geocoding'
+import { searchPlaces } from '../services/geocoding.js'
 
 const DEBOUNCE_MS = 400
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import MapLegend from './MapLegend.jsx'
 
 const DEFAULT_CENTER = [20.5937, 78.9629]
 const DEFAULT_ZOOM = 5
@@ -60,23 +61,31 @@ export default function MapView({
   end,
   routes,
   activeRouteId,
+  recommendedId,
   onMapClick,
 }) {
   const polylines = useMemo(
     () =>
       routes.map((route, index) => {
+        const isRecommended = Boolean(recommendedId) && route.id === recommendedId
         const isActive = activeRouteId === route.id
         const isDimmed = Boolean(activeRouteId) && !isActive
+
+        // A recommended route always draws thick and solid, even before the
+        // user clicks its card. Everything else recedes.
+        const weight = isRecommended ? 7 : isDimmed ? 4 : 5
+        const opacity = isRecommended ? 1 : isDimmed ? 0.4 : 1
+
         return {
           ...route,
           color: ROUTE_COLORS[index] ?? ROUTE_COLORS[ROUTE_COLORS.length - 1],
           dashArray: route.isFallback ? '10 8' : null,
-          weight: isActive ? 7 : 5,
-          opacity: isDimmed ? 0.35 : 1,
-          zIndex: isActive ? 1000 - index : 500 - index,
+          weight,
+          opacity,
+          zIndex: isRecommended ? 1000 - index : isActive ? 600 - index : 500 - index,
         }
       }),
-    [routes, activeRouteId],
+    [routes, activeRouteId, recommendedId],
   )
 
   return (
@@ -116,6 +125,8 @@ export default function MapView({
           />
         ) : null,
       )}
+
+      <MapLegend routes={routes} recommendedId={recommendedId} />
     </MapContainer>
   )
 }

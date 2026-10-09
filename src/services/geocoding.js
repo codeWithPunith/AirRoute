@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { debugError } from '@/utils/debug'
+import { debugError } from '../utils/debug.js'
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org'
 

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { debug, debugError } from '@/utils/debug'
+import { debug, debugError } from '../utils/debug.js'
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving'
 

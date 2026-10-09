@@ -1,92 +1,58 @@
 import { useMemo } from 'react'
-import LocationInput from './LocationInput'
-import { formatDistanceKm, formatDuration, formatMinutes } from '@/utils/haversine'
-
-const ROUTE_COLORS = ['#2563eb', '#f97316']
+import LocationInput from './LocationInput.jsx'
+import RouteCard from './RouteCard.jsx'
+import PrioritySlider from './PrioritySlider.jsx'
+import WhyPanel from './WhyPanel.jsx'
 
 /** Fastest route is labelled "Fastest", any sibling becomes "Alternative". */
-function useRouteLabels(routes) {
+function useRouteLabels(scoredRoutes) {
   return useMemo(() => {
-    if (routes.length < 2) return routes.map((r, i) => `Route ${i + 1}`)
+    if (scoredRoutes.length < 2) return scoredRoutes.map((_, i) => `Route ${i + 1}`)
 
-    const fastestId = routes.reduce((best, r) =>
+    const fastestId = scoredRoutes.reduce((best, r) =>
       r.durationSeconds < best.durationSeconds ? r : best,
     ).id
 
-    return routes.map((r) => (r.id === fastestId ? 'Fastest' : 'Alternative'))
-  }, [routes])
-}
-
-function RouteCard({ route, index, label, isActive, onSelect }) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={isActive}
-      className={`w-full rounded-xl border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-sky-300 ${
-        isActive
-          ? 'border-sky-400 bg-sky-50 shadow-sm'
-          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          className="h-3 w-3 shrink-0 rounded-full"
-          style={{ backgroundColor: ROUTE_COLORS[index] ?? '#64748b' }}
-        />
-        <span className="text-sm font-semibold text-slate-800">{label}</span>
-        {route.isFallback && (
-          <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
-            motorway-free
-          </span>
-        )}
-      </div>
-
-      <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
-        <div>
-          <dt className="text-slate-400">Distance</dt>
-          <dd className="font-medium text-slate-800">
-            {formatDistanceKm(route.distanceMeters)} km
-          </dd>
-        </div>
-        <div>
-          <dt className="text-slate-400">Duration</dt>
-          <dd className="font-medium text-slate-800">
-            {formatMinutes(route.durationSeconds)} min
-          </dd>
-        </div>
-      </dl>
-
-      <p className="mt-2 text-[11px] text-slate-400">
-        ≈ {formatDuration(route.durationSeconds)} driving
-      </p>
-    </button>
-  )
+    return scoredRoutes.map((r) => (r.id === fastestId ? 'Fastest' : 'Alternative'))
+  }, [scoredRoutes])
 }
 
 export default function RoutePanel({
   start,
   end,
-  routes,
+  scoredRoutes,
+  scoredById,
+  recItemById,
+  recommendedId,
   activeRouteId,
+  sliderWeight,
   loading,
+  scoring,
   error,
+  airQualityDown,
+  analysis,
   clickTarget,
   onStartSelect,
   onEndSelect,
   onFindRoutes,
   onRouteSelect,
+  onSliderChange,
 }) {
-  const labels = useRouteLabels(routes)
+  const labels = useRouteLabels(scoredRoutes)
   const canSearch = Boolean(start && end) && !loading
+  const multiRoute = scoredRoutes.length > 1
+
+  const recommended = scoredById.get(recommendedId)
+  const alternative = multiRoute
+    ? scoredRoutes.find((r) => r.id !== recommendedId)
+    : null
 
   return (
     <section className="flex h-full flex-col gap-4 overflow-y-auto bg-white p-4">
       <header>
         <h1 className="text-lg font-bold text-slate-900">AirRoute</h1>
         <p className="text-xs text-slate-500">
-          Compare two driving routes between any two places.
+          Recommend the driving route with lower pollution exposure.
         </p>
       </header>
 
@@ -101,7 +67,7 @@ export default function RoutePanel({
         <LocationInput
           id="end-input"
           label="Destination"
-          placeholder="e.g. HSR Layout, Bengaluru"
+          placeholder="e.g. India Gate, New Delhi"
           value={end}
           onSelect={onEndSelect}
         />
@@ -127,7 +93,11 @@ export default function RoutePanel({
             className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
           />
         )}
-        {loading ? 'Finding routes…' : 'Find routes'}
+        {loading
+          ? scoring
+            ? 'Reading air quality…'
+            : 'Finding routes…'
+          : 'Find routes'}
       </button>
 
       {error && (
@@ -142,27 +112,54 @@ export default function RoutePanel({
         </div>
       )}
 
-      {routes.length > 0 && (
+      {airQualityDown && scoredRoutes.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Air quality unavailable — using default score. Ranking is weighted
+          toward time only.
+        </div>
+      )}
+
+      {multiRoute && (
+        <PrioritySlider value={sliderWeight} onChange={onSliderChange} />
+      )}
+
+      {scoredRoutes.length === 1 && (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+          Only one route was returned for this pair, so there is nothing to
+          compare — the priority slider is hidden.
+        </p>
+      )}
+
+      {scoredRoutes.length > 0 && (
         <div>
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Routes
           </h2>
           <div className="space-y-2">
-            {routes.map((route, index) => (
+            {scoredRoutes.map((route, index) => (
               <RouteCard
                 key={route.id}
                 route={route}
                 index={index}
                 label={labels[index]}
                 isActive={activeRouteId === route.id}
+                isRecommended={route.id === recommendedId}
+                recItem={recItemById.get(route.id)}
                 onSelect={() => onRouteSelect(route.id)}
               />
             ))}
           </div>
-          <p className="mt-2 text-[11px] text-slate-400">
-            Select a card to highlight that route on the map.
-          </p>
         </div>
+      )}
+
+      {recommended && (
+        <WhyPanel
+          recommended={recommended}
+          alternative={alternative}
+          analysis={analysis}
+          sliderWeight={sliderWeight}
+          airQualityDown={airQualityDown}
+        />
       )}
     </section>
   )
