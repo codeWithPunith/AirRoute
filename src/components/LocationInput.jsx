@@ -115,8 +115,11 @@ export default function LocationInput({
 
       {showList && (
         <ul className="absolute z-[1200] mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-          {visibleResults.map((hit) => (
-            <li key={`${hit.lat},${hit.lon}`}>
+          {/* Nominatim can legitimately return two results with identical
+              coordinates but different display_names (e.g. a building and
+              the street it sits on), so the index is part of the key. */}
+          {visibleResults.map((hit, index) => (
+            <li key={`${hit.lat},${hit.lon}#${index}`}>
               <button
                 type="button"
                 onClick={() => handleSelect(hit)}

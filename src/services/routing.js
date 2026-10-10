@@ -101,7 +101,10 @@ export async function getRoutes(start, end) {
 
       return [only, { ...candidate, id: 'route-1', isFallback: true }]
     } catch (fallbackErr) {
-      debugError('fallback route request failed:', fallbackErr?.message)
+      // Expected on the public demo server, which rejects `exclude` with a
+      // 400. This is normal degradation to a single route, not a real error,
+      // so it logs at debug level rather than error level.
+      debug('no motorway-free alternative available:', fallbackErr?.message)
       return [only]
     }
   } catch (err) {
