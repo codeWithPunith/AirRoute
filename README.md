@@ -8,6 +8,12 @@ keys.
 > unchanged underneath. See [DECISIONS.md](./DECISIONS.md) for the full
 > rationale, including the honest limits of the air-quality data.
 
+> **Phase 3 — sign-in required to see results.** Google sign-in via Firebase
+> Authentication gates *route results*, not the app: the map and the inputs are
+> browsable signed out, and pressing **Find routes** opens a sign-in dialog that
+> resumes the search once you authenticate. See
+> [Authentication Setup](#authentication-setup).
+
 ## Run it
 
 ```bash
@@ -39,6 +45,82 @@ npm run lint    # oxlint
 > and OSRM returns a single route for it, so the slider is correctly hidden.
 > Gurugram, Noida Sec 18, and Ghaziabad were all tested; Gurugram reliably
 > returns two.
+
+## Authentication Setup
+
+**The app is browsable signed out; results are not.** Loading the map, clicking
+to set endpoints, and typing search terms all work without an account. The gate
+sits at the point of intent instead: pressing **Find routes** while signed out
+opens a modal, and completing Google sign-in resumes that same search
+automatically — you never press the button twice. Signing out clears the
+in-memory route state so the next person to sign in does not inherit it.
+
+You can also sign in from the header up front, which means never meeting the
+modal at all.
+
+> This is a **UX gate, not a security boundary**. There is no backend, and every
+> data source AirRoute calls (OSRM, Nominatim, Open-Meteo) is public — anyone
+> can call them directly. What the gate guarantees is that the UI never presents
+> another visitor's route results as theirs.
+
+Requires the `firebase` package:
+
+```bash
+npm install firebase
+```
+
+### 1. Create the Firebase project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com).
+2. **Add project** → name it → Google Analytics is optional → **Create**.
+   (Or select an existing project.)
+3. **Project Settings** (gear icon) → **General** → scroll to **Your apps** →
+   click the web icon `</>` → give it a nickname → **Register app**.
+4. Copy the `firebaseConfig` values shown. You need `apiKey`, `authDomain`,
+   `projectId`, `storageBucket`, `messagingSenderId`, and `appId`.
+
+### 2. Enable the Google provider
+
+5. **Authentication** → **Sign-in method** → **Google** → **Enable** → pick a
+   **support email** → **Save**.
+6. **Authentication** → **Settings** → **Authorized domains** → **Add domain**
+   → `localhost` (already present for dev) and your production domain, e.g.
+   `your-app.vercel.app`.
+
+> Docs — [enable a provider](https://firebase.google.com/docs/auth/web/password-auth),
+> [authorized domains](https://firebase.google.com/docs/auth/web/redirect-best-practices),
+> [env vars in Vite](https://vite.dev/guide/env-and-mode.html).
+> Vite only exposes variables prefixed `VITE_` to client code.
+
+### 3. Configure locally
+
+```bash
+cp .env.example .env.local   # then paste your real values into .env.local
+npm run dev
+```
+
+`.env.local` is gitignored. Vite reads env vars at **build** time, so restart
+the dev server (or rebuild) after any change.
+
+If the vars are missing the app still loads and you can browse the map, but no
+search will ever return results — both sign-in buttons are disabled and a
+dev-only console warning names `.env.local`.
+
+### 4. Before deploying
+
+- Add the production domain to Firebase → Authentication → Authorized domains.
+- Add the same `VITE_FIREBASE_*` variables to your host's environment settings
+  (Vercel, Netlify, Firebase Hosting).
+- **Rebuild and redeploy** — static builds bake env values in at build time.
+
+### Verify
+
+Signed out, the map loads and you can set Start/Destination normally. Press
+**Find routes** → a sign-in dialog opens → complete Google sign-in → the search
+runs on its own and the results appear → the header shows your name and photo.
+Refresh → still signed in, and pressing Find routes goes straight to results.
+**Sign out** → the dialog no longer appears on a fresh search, and the previous
+results are cleared.
 
 ## How the algorithm works
 
@@ -112,7 +194,7 @@ an improvement.
 
 ## Stack
 
-React 18 · Vite · TailwindCSS v3 · Leaflet · React-Leaflet · Axios
+React 18 · Vite · TailwindCSS v3 · Leaflet · React-Leaflet · Axios · Firebase Auth (optional sign-in)
 
 ## Data sources
 

@@ -10,6 +10,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 import './index.css'
 
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 
 // Bundlers rewrite leaflet's marker image URLs to something it cannot resolve.
 // Point Icon.Default back at the real bundled assets.
@@ -20,8 +21,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 })
 
+// AuthProvider is mounted at the root so the whole tree — including App —
+// can read the signed-in user.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )

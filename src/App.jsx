@@ -1,6 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import MapView from './components/MapView'
 import RoutePanel from './components/RoutePanel'
+import Header from './components/Header'
+import SignInModal from './components/SignInModal'
+import { useAuth } from './context/AuthContext'
 import { getRoutes } from './services/routing'
 import { reverseGeocode } from './services/geocoding'
 import { scoreAllRoutes } from './services/scoring.js'
@@ -20,6 +23,30 @@ export default function App() {
   const [sliderWeight, setSliderWeight] = useState(0)
   const [scoredRoutes, setScoredRoutes] = useState([])
   const [scoring, setScoring] = useState(false)
+
+  // A signed-out visitor pressing "Find routes" sets this instead of running
+  // the search; the modal then resolves it once Firebase returns a user.
+  const [pendingSearch, setPendingSearch] = useState(false)
+
+  const { user } = useAuth()
+
+  // Signing out leaves the map visible but empties the results, so this state
+  // must be cleared too — otherwise signing in as someone else would reveal
+  // the previous user's endpoints and scored routes.
+  const prevUid = useRef(null)
+  useEffect(() => {
+    if (prevUid.current && prevUid.current !== user?.uid) {
+      setStart(null)
+      setEnd(null)
+      setActiveRouteId(null)
+      setScoredRoutes([])
+      setScoring(false)
+      setSliderWeight(0)
+      setError(null)
+      setPendingSearch(false)
+    }
+    prevUid.current = user?.uid ?? null
+  }, [user])
 
   const clickTarget = start ? 'end' : 'start'
 
@@ -53,7 +80,9 @@ export default function App() {
     [start, resetRoutes],
   )
 
-  async function handleFindRoutes() {
+  // The authenticated workhorse. Split out from handleFindRoutes so the same
+  // search can run either immediately or after the sign-in modal completes.
+  async function runFindRoutes() {
     if (!start || !end) return
 
     setLoading(true)
@@ -88,6 +117,25 @@ export default function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Browsing the map and filling in the endpoints works for anyone. The gate is
+  // here, at the moment it starts to cost something, so a signed-out visitor
+  // sees a real app first and is asked to identify themselves only when they
+  // actually want results.
+  function handleFindRoutes() {
+    if (!user) {
+      setPendingSearch(true)
+      return
+    }
+    runFindRoutes()
+  }
+
+  // Resume the search the visitor originally asked for, now that they have a
+  // user. Endpoints are still in state, so nothing needs re-entering.
+  function handleSignInSuccess() {
+    setPendingSearch(false)
+    runFindRoutes()
   }
 
   function handleStartSelect(point) {
@@ -132,42 +180,54 @@ export default function App() {
     [scoredRoutes],
   )
 
+  // Phase 1/2 markup is untouched. Auth is a modal at the point of intent, not a
+  // wall in front of the app, so the map and inputs are usable from the start.
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-slate-100 md:flex-row">
-      <div className="relative h-[60vh] w-full shrink-0 border-b border-slate-200 md:h-full md:w-3/4 md:border-b-0 md:border-r">
-        <MapView
-          start={start}
-          end={end}
-          routes={scoredRoutes}
-          activeRouteId={activeRouteId}
-          recommendedId={recommendedId}
-          onMapClick={handleMapClick}
-        />
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-slate-100">
+      <Header />
+
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="relative h-[60vh] w-full shrink-0 border-b border-slate-200 md:h-full md:w-3/4 md:border-b-0 md:border-r">
+          <MapView
+            start={start}
+            end={end}
+            routes={scoredRoutes}
+            activeRouteId={activeRouteId}
+            recommendedId={recommendedId}
+            onMapClick={handleMapClick}
+          />
+        </div>
+
+        <div className="h-[40vh] w-full md:h-full md:w-1/4">
+          <RoutePanel
+            start={start}
+            end={end}
+            scoredRoutes={scoredRoutes}
+            scoredById={scoredById}
+            recItemById={recItemById}
+            recommendedId={recommendedId}
+            activeRouteId={activeRouteId}
+            sliderWeight={sliderWeight}
+            loading={loading || scoring}
+            scoring={scoring}
+            error={error}
+            airQualityDown={airQualityDown}
+            analysis={analysis}
+            clickTarget={clickTarget}
+            onStartSelect={handleStartSelect}
+            onEndSelect={handleEndSelect}
+            onFindRoutes={handleFindRoutes}
+            onRouteSelect={setActiveRouteId}
+            onSliderChange={setSliderWeight}
+          />
+        </div>
       </div>
 
-      <div className="h-[40vh] w-full md:h-full md:w-1/4">
-        <RoutePanel
-          start={start}
-          end={end}
-          scoredRoutes={scoredRoutes}
-          scoredById={scoredById}
-          recItemById={recItemById}
-          recommendedId={recommendedId}
-          activeRouteId={activeRouteId}
-          sliderWeight={sliderWeight}
-          loading={loading || scoring}
-          scoring={scoring}
-          error={error}
-          airQualityDown={airQualityDown}
-          analysis={analysis}
-          clickTarget={clickTarget}
-          onStartSelect={handleStartSelect}
-          onEndSelect={handleEndSelect}
-          onFindRoutes={handleFindRoutes}
-          onRouteSelect={setActiveRouteId}
-          onSliderChange={setSliderWeight}
-        />
-      </div>
+      <SignInModal
+        open={pendingSearch}
+        onClose={() => setPendingSearch(false)}
+        onSuccess={handleSignInSuccess}
+      />
     </div>
   )
 }

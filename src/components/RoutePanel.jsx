@@ -49,8 +49,11 @@ export default function RoutePanel({
 
   return (
     <section className="flex h-full flex-col gap-4 overflow-y-auto bg-white p-4">
+      {/* The app bar owns the page title now, so this is a tagline only. */}
       <header>
-        <h1 className="text-lg font-bold text-slate-900">AirRoute</h1>
+        <p className="text-sm font-semibold text-slate-900">
+          Compare pollution exposure
+        </p>
         <p className="text-xs text-slate-500">
           Recommend the driving route with lower pollution exposure.
         </p>
