@@ -48,7 +48,7 @@ export default function RoutePanel({
     : null
 
   return (
-    <section className="flex h-full flex-col gap-4 overflow-y-auto bg-white p-4">
+    <section className="safe-bottom flex flex-col gap-4 bg-white p-4 md:h-full md:overflow-y-auto">
       {/* The app bar owns the page title now, so this is a tagline only. */}
       <header>
         <p className="text-sm font-semibold text-slate-900">
@@ -88,7 +88,7 @@ export default function RoutePanel({
         type="button"
         onClick={onFindRoutes}
         disabled={!canSearch}
-        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+        className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 md:min-h-0 md:py-2.5 md:text-sm"
       >
         {loading && (
           <span

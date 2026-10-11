@@ -15,24 +15,28 @@ export default function Header() {
   const { user, loading } = useAuth()
 
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5 shadow-sm">
-      <div className="flex items-baseline gap-2">
-        <span className="text-base font-bold text-slate-900">AirRoute</span>
-        <span className="hidden text-[11px] text-slate-500 sm:inline">
-          The cleaner way to drive
-        </span>
-      </div>
+    <header className="safe-top sticky top-0 z-[1300] shrink-0 border-b border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur md:px-4 md:py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="shrink-0 text-base font-bold text-slate-900">
+            AirRoute
+          </span>
+          <span className="hidden truncate text-[11px] text-slate-500 sm:inline">
+            The cleaner way to drive
+          </span>
+        </div>
 
-      {loading ? (
-        <span
-          aria-label="Restoring sign-in state"
-          className="h-7 w-20 animate-pulse rounded-full bg-slate-100"
-        />
-      ) : user ? (
-        <UserMenu />
-      ) : (
-        <SignInButton />
-      )}
+        {loading ? (
+          <span
+            aria-label="Restoring sign-in state"
+            className="h-7 w-20 shrink-0 animate-pulse rounded-full bg-slate-100"
+          />
+        ) : user ? (
+          <UserMenu />
+        ) : (
+          <SignInButton />
+        )}
+      </div>
     </header>
   )
 }

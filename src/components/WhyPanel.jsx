@@ -66,7 +66,7 @@ export default function WhyPanel({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between px-3 py-2 text-left"
+        className="flex w-full items-center justify-between px-3 py-3 text-left md:py-2"
       >
         <span className="text-xs font-semibold text-sky-900">Why this route?</span>
         <span className="text-xs text-sky-500">{open ? '−' : '+'}</span>

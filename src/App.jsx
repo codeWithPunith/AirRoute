@@ -34,6 +34,7 @@ export default function App() {
   // must be cleared too — otherwise signing in as someone else would reveal
   // the previous user's endpoints and scored routes.
   const prevUid = useRef(null)
+  const panelRef = useRef(null)
   useEffect(() => {
     if (prevUid.current && prevUid.current !== user?.uid) {
       setStart(null)
@@ -47,6 +48,21 @@ export default function App() {
     }
     prevUid.current = user?.uid ?? null
   }, [user])
+
+  // On a phone the map sits above the fold, so results appear off-screen with
+  // no cue that anything happened. Nudge the panel into view once, when the
+  // first scores land. Desktop is a two-pane layout where both are already
+  // visible, so this is skipped there.
+  const seenRoutes = useRef(false)
+  useEffect(() => {
+    if (scoredRoutes.length > 0) seenRoutes.current = true
+    if (!seenRoutes.current || scoredRoutes.length === 0) return
+    if (scoring) return
+    if (!window.matchMedia('(max-width: 767px)').matches) return
+
+    panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    seenRoutes.current = false
+  }, [scoredRoutes, scoring])
 
   const clickTarget = start ? 'end' : 'start'
 
@@ -180,14 +196,17 @@ export default function App() {
     [scoredRoutes],
   )
 
-  // Phase 1/2 markup is untouched. Auth is a modal at the point of intent, not a
-  // wall in front of the app, so the map and inputs are usable from the start.
+  // Mobile and desktop are deliberately different layouts, not one layout that
+  // squeezes. On phones the page is ONE natural scroll: a fixed-height map on
+  // top, then the form and results in flow below it. That kills the
+  // scroll-inside-a-scroll-box trap of a 40vh panel. On desktop it stays the
+  // two-pane app it always was.
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-slate-100">
+    <div className="flex min-h-dvh flex-col bg-slate-100 md:h-screen md:overflow-hidden">
       <Header />
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="relative h-[60vh] w-full shrink-0 border-b border-slate-200 md:h-full md:w-3/4 md:border-b-0 md:border-r">
+      <div className="flex flex-1 flex-col md:min-h-0 md:flex-row">
+        <div className="relative h-[42dvh] w-full shrink-0 border-b border-slate-200 md:h-full md:w-3/4 md:border-b-0 md:border-r">
           <MapView
             start={start}
             end={end}
@@ -198,7 +217,7 @@ export default function App() {
           />
         </div>
 
-        <div className="h-[40vh] w-full md:h-full md:w-1/4">
+        <div ref={panelRef} className="w-full md:h-full md:w-1/4">
           <RoutePanel
             start={start}
             end={end}

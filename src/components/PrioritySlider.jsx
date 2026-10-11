@@ -29,7 +29,10 @@ export default function PrioritySlider({ value, onChange }) {
         value={pct}
         onChange={(e) => onChange(Number(e.target.value) / 100)}
         aria-valuetext={`${pct} percent clean`}
-        className="mt-2 w-full cursor-pointer accent-sky-600"
+        // The default range thumb is ~16px, which is fiddly to drag with a
+        // finger. A taller track plus a padded wrapper enlarges the hit area
+        // without changing the visual weight on desktop.
+        className="mt-3 h-8 w-full cursor-pointer accent-sky-600 md:mt-2 md:h-5"
       />
 
       <div className="mt-1 flex justify-between text-[10px] uppercase tracking-wide text-slate-400">

@@ -52,7 +52,7 @@ export default function SignInModal({ open, onClose, onSuccess }) {
         aria-modal="true"
         aria-labelledby="signin-modal-title"
         tabIndex={-1}
-        className="relative w-full max-w-sm rounded-2xl bg-white p-7 shadow-xl outline-none"
+        className="relative max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-6 shadow-xl outline-none sm:p-7"
       >
         <button
           type="button"

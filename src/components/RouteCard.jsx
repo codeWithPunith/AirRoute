@@ -19,7 +19,7 @@ export default function RouteCard({
       type="button"
       onClick={onSelect}
       aria-pressed={isActive}
-      className={`w-full rounded-xl border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-sky-300 ${
+      className={`w-full rounded-xl border p-3 text-left transition active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-sky-300 ${
         isRecommended
           ? 'border-emerald-400 bg-emerald-50 shadow-sm'
           : isActive

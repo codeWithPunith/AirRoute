@@ -87,6 +87,7 @@ export default function LocationInput({
           value={query}
           placeholder={placeholder}
           autoComplete="off"
+          enterKeyHint="search"
           onChange={(e) => {
             const next = e.target.value
             setQuery(next)
@@ -95,7 +96,10 @@ export default function LocationInput({
             setSearching(next.trim().length >= 3)
           }}
           onFocus={() => results.length > 0 && setOpen(true)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-9 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+          // 16px on phones on purpose: iOS Safari zooms the whole viewport
+          // when an input under 16px is focused, which throws off the
+          // sticky header and the fixed map. Desktop keeps the tighter size.
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pr-9 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200 md:py-2 md:text-sm"
         />
 
         {searching && (
@@ -123,7 +127,7 @@ export default function LocationInput({
               <button
                 type="button"
                 onClick={() => handleSelect(hit)}
-                className="block w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-sky-50"
+                className="block w-full px-3 py-2.5 text-left text-sm text-slate-700 active:bg-sky-50 hover:bg-sky-50 md:py-2 md:text-xs"
               >
                 {hit.display_name}
               </button>

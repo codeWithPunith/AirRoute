@@ -53,7 +53,7 @@ export default function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-full border border-slate-300 bg-white py-1 pl-1 pr-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        className="flex min-h-[40px] items-center gap-2 rounded-full border border-slate-300 bg-white py-1 pl-1 pr-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
       >
         {user.photoURL ? (
           <img
@@ -91,7 +91,7 @@ export default function UserMenu() {
             type="button"
             role="menuitem"
             onClick={handleSignOut}
-            className="block w-full px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+            className="block w-full px-3 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
           >
             Sign out
           </button>

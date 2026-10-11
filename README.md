@@ -192,6 +192,22 @@ chosen corridor. A single route contains one road, so clean mode usually
 cannot find a genuinely different one; the UI says so rather than inventing
 an improvement.
 
+## Layout
+
+The app is **two layouts, not one responsive squeeze**:
+
+- **Desktop (`md:` and up)** — the original two-pane app: map on the left,
+  control panel scrolling independently on the right, filling the viewport.
+- **Phones** — a single natural page scroll. The map is a fixed `42dvh` band at
+  the top with the form and results flowing below it, so there is no
+  scroll-inside-a-scroll-box.
+
+Mobile-specific details: the header is sticky and respects the notch
+(`env(safe-area-inset-top)`), inputs use a 16px font so iOS Safari does not
+auto-zoom on focus, controls are sized to ~44px touch targets, and the map
+legend collapses to a compact route-colour row. When scores finish, the panel
+scrolls itself into view, since results land below the fold.
+
 ## Stack
 
 React 18 · Vite · TailwindCSS v3 · Leaflet · React-Leaflet · Axios · Firebase Auth (optional sign-in)
